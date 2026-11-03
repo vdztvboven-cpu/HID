@@ -37,12 +37,12 @@ button.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
 </head>
 <body>
 <main>
-<h1>DuckyScript to CH552 Converter (SDCC Safe)</h1>
-<p class="sub">Zet DuckyScript om naar SDCC-vriendelijke bytecode arrays voor de CH552p.</p>
+<h1>DuckyScript to CH552 Converter</h1>
+<p class="sub">Convert DuckyScript to optimized bytecode arrays for the CH552p.</p>
 
 <div class="settings-panel">
   <div>
-    <label for="lay">Toetsenbord:</label>
+    <label for="lay">Keyboard Layout:</label>
     <select id="lay">
       <option value="us">US QWERTY</option>
       <option value="az">Belgian AZERTY</option>
@@ -50,11 +50,11 @@ button.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
   </div>
   <div>
     <label for="keyDelay">Key Delay (ms):</label>
-    <input type="number" id="keyDelay" value="15" min="1" max="100">
+    <input type="number" id="keyDelay" value="2" min="1" max="100">
   </div>
   <div>
     <label for="bootDelay">Boot Delay (ms):</label>
-    <input type="number" id="bootDelay" value="3000" min="0" max="10000">
+    <input type="number" id="bootDelay" value="500" min="0" max="10000">
   </div>
 </div>
 
@@ -67,12 +67,12 @@ GUI r
 DELAY 500
 STRING https://www.youtube.com/watch?v=dQw4w9WgXcQ
 ENTER</textarea></div>
-<div class="col"><label for="out">Arduino sketch (.ino)</label>
+<div class="col"><label for="out">Arduino Sketch (.ino)</label>
 <textarea id="out" spellcheck="false" readonly></textarea></div>
 </div>
-<div class="bar"><button id="copy">Kopieer sketch</button><button id="sel" class="alt">Selecteer alles</button><span id="msg"></span></div>
+<div class="bar"><button id="copy">Copy sketch</button><button id="sel" class="alt">Select all</button><span id="msg"></span></div>
 <ul id="warn"></ul>
-<div class="note"><b>Belangrijk:</b> Zet in Arduino IDE <i>Tools → USB Settings</i> op <b>USER CODE w/ 148B USB ram</b>.</div>
+<div class="note"><b>Important:</b> In Arduino IDE, set <i>Tools → USB Settings</i> to <b>USER CODE w/ 148B USB ram</b>.</div>
 </main>
 <script>
 var MODS = {
@@ -131,7 +131,7 @@ function convert(src){
     } else if (cmd === 'REPEAT') {
       var count = parseInt(arg, 10) || 1;
       if (lastCount === 0) {
-        warn.push('Line ' + n + ': REPEAT heeft geen eerdere actie');
+        warn.push('Line ' + n + ': REPEAT has no prior action to repeat');
       } else {
         var startIdx = mods.length - lastCount;
         var sliceM = mods.slice(startIdx);
@@ -154,7 +154,7 @@ function convert(src){
         var ch = clean[j];
         if (layout === 'az') {
           var a = AZ[ch];
-          if (!a) { warn.push('Line ' + n + ': AZERTY kan "' + ch + '" niet typen'); continue; }
+          if (!a) { warn.push('Line ' + n + ': AZERTY cannot type character "' + ch + '"'); continue; }
           var mod = a[1] === 1 ? 0x02 : (a[1] === 2 ? 0x40 : 0x00);
           var kVal = "'" + (a[0] === '\'' ? "\\'" : (a[0] === '\\' ? "\\\\" : a[0])) + "'";
           itemMods.push(mod);
@@ -194,7 +194,7 @@ function convert(src){
             if (tok >= 'A' && tok <= 'Z') comboMod |= 0x02;
           }
         } else {
-          warn.push('Line ' + n + ': onbekende toets "' + tok + '"');
+          warn.push('Line ' + n + ': unknown key "' + tok + '"');
         }
       });
 
@@ -292,8 +292,8 @@ document.getElementById('copy').onclick = function(){
   selectOut();
   var ok = false;
   try{ok = document.execCommand('copy')}catch(e){}
-  if(!ok && navigator.clipboard){navigator.clipboard.writeText(out.value).then(function(){flash('Gekopieerd')},function(){flash('Druk Ctrl+C');});return;}
-  flash(ok ? 'Gekopieerd' : 'Druk Ctrl+C');
+  if(!ok && navigator.clipboard){navigator.clipboard.writeText(out.value).then(function(){flash('Copied')},function(){flash('Press Ctrl+C to copy');});return;}
+  flash(ok ? 'Copied' : 'Press Ctrl+C to copy');
 };
 
 inp.addEventListener('input', run);
