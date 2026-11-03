@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>DuckyScript to CH552 Converter (Pro & Configurable)</title>
+<title>DuckyScript to CH552 Converter (SDCC Compatible)</title>
 <style>
 :root{--bg:#f3f1ec;--panel:#fff;--ink:#1d2320;--mute:#5d665f;--line:#cfd3cb;--acc:#0b6b4f;--accink:#fff;--warn:#9a5b00;--code:#0f1a14;--codeink:#cdeed9;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -19,7 +19,7 @@ h1{font-size:1.5rem;margin:0 0 4px;letter-spacing:-.01em}
 @media (max-width:760px){.grid{grid-template-columns:1fr}}
 .col{display:flex;flex-direction:column;min-width:0}
 label{font-weight:600;margin-bottom:6px;font-size:.95rem}
-textarea{width:100%;min-height:340px;resize:vertical;border:1px solid var(--line);border-radius:6px;padding:12px;font:13px/1.5 "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;tab-size:2;white-space:pre;overflow:auto}
+textarea{width:100%;min-height:360px;resize:vertical;border:1px solid var(--line);border-radius:6px;padding:12px;font:13px/1.5 "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;tab-size:2;white-space:pre;overflow:auto}
 #in{background:var(--panel);color:var(--ink)}
 #out{background:var(--code);color:var(--codeink)}
 textarea:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
@@ -37,8 +37,8 @@ button.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
 </head>
 <body>
 <main>
-<h1>DuckyScript to CH552 Converter (Pro & Configurable)</h1>
-<p class="sub">Zet DuckyScript om en pas vertragingen en toetsenbordindelingen volledig naar wens aan.</p>
+<h1>DuckyScript to CH552 Converter (SDCC Safe)</h1>
+<p class="sub">Zet DuckyScript om naar SDCC-vriendelijke bytecode arrays voor de CH552p.</p>
 
 <div class="settings-panel">
   <div>
@@ -49,12 +49,8 @@ button.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
     </select>
   </div>
   <div>
-    <label for="charDelay">Char Delay (ms):</label>
-    <input type="number" id="charDelay" value="5" min="0" max="500">
-  </div>
-  <div>
-    <label for="pressDelay">Press Delay (ms):</label>
-    <input type="number" id="pressDelay" value="15" min="0" max="500">
+    <label for="keyDelay">Key Delay (ms):</label>
+    <input type="number" id="keyDelay" value="15" min="1" max="100">
   </div>
   <div>
     <label for="bootDelay">Boot Delay (ms):</label>
@@ -80,36 +76,18 @@ ENTER</textarea></div>
 </main>
 <script>
 var MODS = {
-  CTRL: 'KEY_LEFT_CTRL', CONTROL: 'KEY_LEFT_CTRL',
-  SHIFT: 'KEY_LEFT_SHIFT',
-  ALT: 'KEY_LEFT_ALT',
-  GUI: 'KEY_LEFT_GUI', WINDOWS: 'KEY_LEFT_GUI', COMMAND: 'KEY_LEFT_GUI',
-  RCTRL: 'KEY_RIGHT_CTRL', RIGHTCTRL: 'KEY_RIGHT_CTRL',
-  RSHIFT: 'KEY_RIGHT_SHIFT', RIGHTSHIFT: 'KEY_RIGHT_SHIFT',
-  RALT: 'KEY_RIGHT_ALT', RIGHTALT: 'KEY_RIGHT_ALT'
+  CTRL: 0x01, CONTROL: 0x01, SHIFT: 0x02, ALT: 0x04, GUI: 0x08, WINDOWS: 0x08, COMMAND: 0x08,
+  RCTRL: 0x10, RIGHTCTRL: 0x10, RSHIFT: 0x20, RIGHTSHIFT: 0x20, RALT: 0x40, RIGHTALT: 0x40
 };
 
 var KEYS = {
-  ENTER: 'KEY_RETURN', RETURN: 'KEY_RETURN',
-  ESC: 'KEY_ESC', ESCAPE: 'KEY_ESC',
-  BACKSPACE: 'KEY_BACKSPACE',
-  TAB: 'KEY_TAB',
-  SPACE: "' '",
-  CAPSLOCK: 'KEY_CAPS_LOCK',
-  PRINTSCREEN: 'KEY_PRINT_SCREEN',
-  SCROLLLOCK: 'KEY_SCROLL_LOCK',
-  PAUSE: 'KEY_PAUSE',
-  INSERT: 'KEY_INSERT',
-  HOME: 'KEY_HOME',
-  PAGEUP: 'KEY_PAGE_UP',
-  DELETE: 'KEY_DELETE', DEL: 'KEY_DELETE',
-  END: 'KEY_END',
-  PAGEDOWN: 'KEY_PAGE_DOWN',
-  RIGHT: 'KEY_RIGHT_ARROW', RIGHTARROW: 'KEY_RIGHT_ARROW',
-  LEFT: 'KEY_LEFT_ARROW', LEFTARROW: 'KEY_LEFT_ARROW',
-  DOWN: 'KEY_DOWN_ARROW', DOWNARROW: 'KEY_DOWN_ARROW',
-  UP: 'KEY_UP_ARROW', UPARROW: 'KEY_UP_ARROW',
-  MENU: 'KEY_MENU'
+  ENTER: 'KEY_RETURN', RETURN: 'KEY_RETURN', ESC: 'KEY_ESC', ESCAPE: 'KEY_ESC',
+  BACKSPACE: 'KEY_BACKSPACE', TAB: 'KEY_TAB', SPACE: "' '",
+  CAPSLOCK: 'KEY_CAPS_LOCK', PRINTSCREEN: 'KEY_PRINT_SCREEN', SCROLLLOCK: 'KEY_SCROLL_LOCK',
+  PAUSE: 'KEY_PAUSE', INSERT: 'KEY_INSERT', HOME: 'KEY_HOME', PAGEUP: 'KEY_PAGE_UP',
+  DELETE: 'KEY_DELETE', DEL: 'KEY_DELETE', END: 'KEY_END', PAGEDOWN: 'KEY_PAGE_DOWN',
+  RIGHT: 'KEY_RIGHT_ARROW', RIGHTARROW: 'KEY_RIGHT_ARROW', LEFT: 'KEY_LEFT_ARROW', LEFTARROW: 'KEY_LEFT_ARROW',
+  DOWN: 'KEY_DOWN_ARROW', DOWNARROW: 'KEY_DOWN_ARROW', UP: 'KEY_UP_ARROW', UPARROW: 'KEY_UP_ARROW', MENU: 'KEY_MENU'
 };
 
 var AZ = {};
@@ -120,46 +98,54 @@ var AZ = {};
   [['&','1',0],['"','3',0],["'",'4',0],['(','5',0],['!','8',0],[')','-',0],['-','=',0],['_','=',1],['$',']',0],['*',']',1],['%',"'",1],[',','m',0],['?','m',1],[';',',',0],['.',',',1],[':','.',0],['/','.',1],['=','/',0],['+','/',1],['|','1',2],['@','2',2],['#','3',2],['^','6',2],['{','9',2],['}','0',2],['[','[',2],[']',']',2],['`','\\',2],['~','/',2],[' ',' ',0]].forEach(function(r){AZ[r[0]] = [r[1], r[2]];});
 })();
 
+function hex(n) { return '0x' + ('0' + n.toString(16)).slice(-2).toUpperCase(); }
+
 function convert(src){
   var layout = document.getElementById('lay').value;
-  var charDelay = parseInt(document.getElementById('charDelay').value, 10) || 5;
-  var pressDelay = parseInt(document.getElementById('pressDelay').value, 10) || 15;
-  var bootDelay = parseInt(document.getElementById('bootDelay').value, 10) || 3000;
-
-  var body = [], warn = [], defaultDelay = 0;
+  var mods = [], keys = [], warn = [], defaultDelay = 0;
   var lines = src.split(/\r?\n/);
-  var lastLines = [];
+  var lastCount = 0;
 
   lines.forEach(function(raw, i){
     var line = raw.replace(/^\s+/,'');
     if (!line.trim()) return;
     var m = line.match(/^(\S+)(?: (.*))?$/), cmd = m[1].toUpperCase(), arg = m[2] || '', n = i + 1;
 
-    if (cmd === 'REM') {
-      body.push('  // ' + arg);
-      return;
-    }
+    if (cmd === 'REM') return;
 
     if (cmd === 'DEFAULT_DELAY' || cmd === 'DEFAULTDELAY') {
       defaultDelay = parseInt(arg, 10) || 0;
-      body.push('  // default delay: ' + defaultDelay + ' ms');
       return;
     }
 
-    var currentBlock = [];
+    var itemMods = [], itemKeys = [];
 
     if (cmd === 'DELAY') {
       var d = parseInt(arg, 10) || 0;
-      currentBlock.push('  delay(' + d + ');');
+      while (d > 0) {
+        var chunk = Math.min(d, 255);
+        itemMods.push(0xFE);
+        itemKeys.push(hex(chunk));
+        d -= chunk;
+      }
     } else if (cmd === 'REPEAT') {
       var count = parseInt(arg, 10) || 1;
-      if (lastLines.length === 0) {
+      if (lastCount === 0) {
         warn.push('Line ' + n + ': REPEAT heeft geen eerdere actie');
       } else {
-        var t = count > 255 ? 'uint16_t' : 'uint8_t';
-        body.push('  for (' + t + ' r = 0; r < ' + count + '; r++) {');
-        lastLines.forEach(function(l){ body.push('    ' + l); });
-        body.push('  }');
+        var startIdx = mods.length - lastCount;
+        var sliceM = mods.slice(startIdx);
+        var sliceK = keys.slice(startIdx);
+        for (var r = 0; r < count; r++) {
+          for (var c = 0; c < sliceM.length; c++) {
+            mods.push(sliceM[c]);
+            keys.push(sliceK[c]);
+          }
+          if (defaultDelay > 0) {
+            mods.push(0xFE);
+            keys.push(hex(Math.min(defaultDelay, 255)));
+          }
+        }
       }
       return;
     } else if (cmd === 'STRING' || cmd === 'STRINGLN') {
@@ -169,21 +155,19 @@ function convert(src){
         if (layout === 'az') {
           var a = AZ[ch];
           if (!a) { warn.push('Line ' + n + ': AZERTY kan "' + ch + '" niet typen'); continue; }
-          if (a[1] === 1) currentBlock.push('  Keyboard_press(KEY_LEFT_SHIFT);');
-          if (a[1] === 2) currentBlock.push('  Keyboard_press(KEY_RIGHT_ALT);');
-          currentBlock.push('  Keyboard_write(\'' + (a[0] === '\'' ? '\\\'' : a[0]) + '\');');
-          if (a[1] > 0) currentBlock.push('  Keyboard_releaseAll();');
-          currentBlock.push('  delay(' + charDelay + ');');
+          var mod = a[1] === 1 ? 0x02 : (a[1] === 2 ? 0x40 : 0x00);
+          var kVal = "'" + (a[0] === '\'' ? "\\'" : (a[0] === '\\' ? "\\\\" : a[0])) + "'";
+          itemMods.push(mod);
+          itemKeys.push(kVal);
         } else {
-          currentBlock.push('  Keyboard_write(\'' + (ch === '\'' || ch === '\\' ? '\\' + ch : ch) + '\');');
-          currentBlock.push('  delay(' + charDelay + ');');
+          var kVal = "'" + (ch === '\'' ? "\\'" : (ch === '\\' ? "\\\\" : ch)) + "'";
+          itemMods.push(0x00);
+          itemKeys.push(kVal);
         }
       }
       if (cmd === 'STRINGLN') {
-        currentBlock.push('  Keyboard_press(KEY_RETURN);');
-        currentBlock.push('  delay(' + pressDelay * 2 + ');');
-        currentBlock.push('  Keyboard_releaseAll();');
-        currentBlock.push('  delay(' + pressDelay + ');');
+        itemMods.push(0x00);
+        itemKeys.push('KEY_RETURN');
       }
     } else {
       var parts = line.trim().split(/\s+/);
@@ -193,51 +177,54 @@ function convert(src){
         parts.pop();
       }
 
-      var pressLines = [], releaseLines = [];
+      var comboMod = 0, comboKey = 0;
       parts.forEach(function(tok){
         var u = tok.toUpperCase();
-        if (MODS[u]) {
-          pressLines.push('  Keyboard_press(' + MODS[u] + ');');
-        } else if (KEYS[u]) {
-          pressLines.push('  Keyboard_press(' + KEYS[u] + ');');
-        } else if (/^F([1-9]|1[0-2])$/.test(u)) {
-          pressLines.push('  Keyboard_press(KEY_' + u + ');');
+        if (MODS[u]) comboMod |= MODS[u];
+        else if (KEYS[u]) comboKey = KEYS[u];
+        else if (/^F([1-9]|1[0-2])$/.test(u)) {
+          comboKey = 'KEY_' + u;
         } else if (tok.length === 1 && /[a-zA-Z0-9]/.test(tok)) {
           if (layout === 'az' && AZ[tok]) {
-            var a = AZ[tok];
-            if (a[1] === 1) pressLines.push('  Keyboard_press(KEY_LEFT_SHIFT);');
-            if (a[1] === 2) pressLines.push('  Keyboard_press(KEY_RIGHT_ALT);');
-            pressLines.push('  Keyboard_press(\'' + a[0] + '\');');
+            comboKey = "'" + AZ[tok][0] + "'";
+            if (AZ[tok][1] === 1) comboMod |= 0x02;
+            if (AZ[tok][1] === 2) comboMod |= 0x40;
           } else {
-            if (tok >= 'A' && tok <= 'Z') pressLines.push('  Keyboard_press(KEY_LEFT_SHIFT);');
-            pressLines.push('  Keyboard_press(\'' + tok.toLowerCase() + '\');');
+            comboKey = "'" + tok.toLowerCase() + "'";
+            if (tok >= 'A' && tok <= 'Z') comboMod |= 0x02;
           }
         } else {
           warn.push('Line ' + n + ': onbekende toets "' + tok + '"');
         }
       });
 
-      releaseLines.push('  delay(' + pressDelay * 2 + ');');
-      releaseLines.push('  Keyboard_releaseAll();');
-      releaseLines.push('  delay(' + pressDelay + ');');
-
-      for (var rc = 0; rc < repeatCount; rc++) {
-        pressLines.forEach(function(l){ currentBlock.push(l); });
-        releaseLines.forEach(function(l){ currentBlock.push(l); });
+      if (comboKey || comboMod) {
+        for (var rc = 0; rc < repeatCount; rc++) {
+          itemMods.push(comboMod);
+          itemKeys.push(comboKey || 0x00);
+        }
       }
     }
 
-    if (currentBlock.length > 0) {
-      currentBlock.forEach(function(l){ body.push(l); });
-      lastLines = currentBlock;
+    if (itemMods.length > 0) {
+      for (var a = 0; a < itemMods.length; a++) {
+        mods.push(itemMods[a]);
+        keys.push(itemKeys[a]);
+      }
+      lastCount = itemMods.length;
       if (defaultDelay > 0) {
-        body.push('  delay(' + defaultDelay + ');');
+        mods.push(0xFE);
+        keys.push(hex(Math.min(defaultDelay, 255)));
+        lastCount += 1;
       }
     }
   });
 
+  var keyDelay = parseInt(document.getElementById('keyDelay').value, 10) || 15;
+  var bootDelay = parseInt(document.getElementById('bootDelay').value, 10) || 3000;
+
   var ino = [
-'// DuckyScript Sketch for CH552 (ch55xduino)',
+'// SDCC Safe Bytecode Payload for CH552 (ch55xduino)',
 '// Target layout: ' + (layout === 'az' ? 'Belgian AZERTY' : 'US QWERTY'),
 '// Tools -> USB Settings -> USER CODE w/ 148B USB ram',
 '#ifndef USER_USB_RAM',
@@ -245,23 +232,52 @@ function convert(src){
 '#endif',
 '#include "src/userUsbHidKeyboard/USBHIDKeyboard.h"',
 '',
-'void payload() {'].concat(body, [
+'__code const uint8_t PAYLOAD_MODS[] = { ' + mods.join(', ') + ' };',
+'__code const uint16_t PAYLOAD_KEYS[] = { ' + keys.join(', ') + ' };',
+'',
+'void runPayload() {',
+'  uint16_t len = sizeof(PAYLOAD_MODS);',
+'  for (uint16_t i = 0; i < len; i++) {',
+'    uint8_t mod = PAYLOAD_MODS[i];',
+'    uint16_t key = PAYLOAD_KEYS[i];',
+'    if (mod == 0xFE) {',
+'      delay((uint8_t)key);',
+'    } else {',
+'      if (mod & 0x01) Keyboard_press(KEY_LEFT_CTRL);',
+'      if (mod & 0x02) Keyboard_press(KEY_LEFT_SHIFT);',
+'      if (mod & 0x04) Keyboard_press(KEY_LEFT_ALT);',
+'      if (mod & 0x08) Keyboard_press(KEY_LEFT_GUI);',
+'      if (mod & 0x10) Keyboard_press(KEY_RIGHT_CTRL);',
+'      if (mod & 0x20) Keyboard_press(KEY_RIGHT_SHIFT);',
+'      if (mod & 0x40) Keyboard_press(KEY_RIGHT_ALT);',
+'      if (key) {',
+'        if (mod == 0x00 && key < 0x80) {',
+'          Keyboard_write((char)key);',
+'        } else {',
+'          Keyboard_press((uint8_t)key);',
+'        }',
+'      }',
+'      delay(' + keyDelay + ');',
+'      Keyboard_releaseAll();',
+'      delay(' + keyDelay + ');',
+'    }',
+'  }',
 '}',
 '',
 'void setup() {',
 '  USBInit();',
-'  delay(' + bootDelay + '); // Wacht op USB enumeratie',
-'  payload();',
+'  delay(' + bootDelay + ');',
+'  runPayload();',
 '}',
 '',
 'void loop() {}'
-  ]).join('\n');
+  ].join('\n');
 
   return { text: ino, warn: warn };
 }
 
 var inp = document.getElementById('in'), out = document.getElementById('out'), wl = document.getElementById('warn'), msg = document.getElementById('msg'), lay = document.getElementById('lay');
-var charDelayInp = document.getElementById('charDelay'), pressDelayInp = document.getElementById('pressDelay'), bootDelayInp = document.getElementById('bootDelay');
+var keyDelayInp = document.getElementById('keyDelay'), bootDelayInp = document.getElementById('bootDelay');
 
 function run(){
   var r = convert(inp.value);
@@ -282,8 +298,7 @@ document.getElementById('copy').onclick = function(){
 
 inp.addEventListener('input', run);
 lay.addEventListener('change', run);
-charDelayInp.addEventListener('input', run);
-pressDelayInp.addEventListener('input', run);
+keyDelayInp.addEventListener('input', run);
 bootDelayInp.addEventListener('input', run);
 run();
 </script>
