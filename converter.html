@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DuckyScript to CH552 Converter (Pro & Configurable)</title>
+<style>
+:root{--bg:#f3f1ec;--panel:#fff;--ink:#1d2320;--mute:#5d665f;--line:#cfd3cb;--acc:#0b6b4f;--accink:#fff;--warn:#9a5b00;--code:#0f1a14;--codeink:#cdeed9;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141916;--panel:#1c231f;--ink:#e6ece7;--mute:#9aa69d;--line:#2f3a33;--acc:#4cc38f;--accink:#06251a;--warn:#e0a24a;--code:#0c110e;--codeink:#cdeed9}}
+:root[data-theme="dark"]{--bg:#141916;--panel:#1c231f;--ink:#e6ece7;--mute:#9aa69d;--line:#2f3a33;--acc:#4cc38f;--accink:#06251a;--warn:#e0a24a;--code:#0c110e;--codeink:#cdeed9}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.5rem;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--mute);margin:0 0 16px;max-width:70ch}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.grid{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;min-width:0}
+label{font-weight:600;margin-bottom:6px;font-size:.95rem}
+textarea{width:100%;min-height:340px;resize:vertical;border:1px solid var(--line);border-radius:6px;padding:12px;font:13px/1.5 "IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;tab-size:2;white-space:pre;overflow:auto}
+#in{background:var(--panel);color:var(--ink)}
+#out{background:var(--code);color:var(--codeink)}
+textarea:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.bar{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+button{background:var(--acc);color:var(--accink);border:0;border-radius:6px;padding:9px 16px;font:600 .95rem inherit;font-family:inherit;cursor:pointer}
+button.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
+#msg{color:var(--mute);font-size:.9rem}
+.settings-panel{display:flex;gap:15px;align-items:center;margin-bottom:14px;flex-wrap:wrap;background:var(--panel);padding:12px 14px;border:1px solid var(--line);border-radius:6px}
+.settings-panel div{display:flex;flex-direction:column;font-size:.85rem}
+.settings-panel select, .settings-panel input{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:5px 8px;font:inherit;font-size:.9rem;width:120px}
+#warn{margin:14px 0 0;padding:0;list-style:none;color:var(--warn);font-size:.92rem}
+.note{margin-top:18px;padding:12px 14px;border:1px solid var(--line);border-radius:6px;background:var(--panel);font-size:.92rem;color:var(--mute)}
+.note b{color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+<h1>DuckyScript to CH552 Converter (Pro & Configurable)</h1>
+<p class="sub">Zet DuckyScript om en pas vertragingen en toetsenbordindelingen volledig naar wens aan.</p>
+
+<div class="settings-panel">
+  <div>
+    <label for="lay">Toetsenbord:</label>
+    <select id="lay">
+      <option value="us">US QWERTY</option>
+      <option value="az">Belgian AZERTY</option>
+    </select>
+  </div>
+  <div>
+    <label for="charDelay">Char Delay (ms):</label>
+    <input type="number" id="charDelay" value="5" min="0" max="500">
+  </div>
+  <div>
+    <label for="pressDelay">Press Delay (ms):</label>
+    <input type="number" id="pressDelay" value="15" min="0" max="500">
+  </div>
+  <div>
+    <label for="bootDelay">Boot Delay (ms):</label>
+    <input type="number" id="bootDelay" value="3000" min="0" max="10000">
+  </div>
+</div>
+
+<div class="grid">
+<div class="col"><label for="in">DuckyScript</label>
+<textarea id="in" spellcheck="false">REM Rickroll Payload
+DEFAULT_DELAY 20
+DELAY 1000
+GUI r
+DELAY 500
+STRING https://www.youtube.com/watch?v=dQw4w9WgXcQ
+ENTER</textarea></div>
+<div class="col"><label for="out">Arduino sketch (.ino)</label>
+<textarea id="out" spellcheck="false" readonly></textarea></div>
+</div>
+<div class="bar"><button id="copy">Kopieer sketch</button><button id="sel" class="alt">Selecteer alles</button><span id="msg"></span></div>
+<ul id="warn"></ul>
+<div class="note"><b>Belangrijk:</b> Zet in Arduino IDE <i>Tools → USB Settings</i> op <b>USER CODE w/ 148B USB ram</b>.</div>
+</main>
+<script>
+var MODS = {
+  CTRL: 'KEY_LEFT_CTRL', CONTROL: 'KEY_LEFT_CTRL',
+  SHIFT: 'KEY_LEFT_SHIFT',
+  ALT: 'KEY_LEFT_ALT',
+  GUI: 'KEY_LEFT_GUI', WINDOWS: 'KEY_LEFT_GUI', COMMAND: 'KEY_LEFT_GUI',
+  RCTRL: 'KEY_RIGHT_CTRL', RIGHTCTRL: 'KEY_RIGHT_CTRL',
+  RSHIFT: 'KEY_RIGHT_SHIFT', RIGHTSHIFT: 'KEY_RIGHT_SHIFT',
+  RALT: 'KEY_RIGHT_ALT', RIGHTALT: 'KEY_RIGHT_ALT'
+};
+
+var KEYS = {
+  ENTER: 'KEY_RETURN', RETURN: 'KEY_RETURN',
+  ESC: 'KEY_ESC', ESCAPE: 'KEY_ESC',
+  BACKSPACE: 'KEY_BACKSPACE',
+  TAB: 'KEY_TAB',
+  SPACE: "' '",
+  CAPSLOCK: 'KEY_CAPS_LOCK',
+  PRINTSCREEN: 'KEY_PRINT_SCREEN',
+  SCROLLLOCK: 'KEY_SCROLL_LOCK',
+  PAUSE: 'KEY_PAUSE',
+  INSERT: 'KEY_INSERT',
+  HOME: 'KEY_HOME',
+  PAGEUP: 'KEY_PAGE_UP',
+  DELETE: 'KEY_DELETE', DEL: 'KEY_DELETE',
+  END: 'KEY_END',
+  PAGEDOWN: 'KEY_PAGE_DOWN',
+  RIGHT: 'KEY_RIGHT_ARROW', RIGHTARROW: 'KEY_RIGHT_ARROW',
+  LEFT: 'KEY_LEFT_ARROW', LEFTARROW: 'KEY_LEFT_ARROW',
+  DOWN: 'KEY_DOWN_ARROW', DOWNARROW: 'KEY_DOWN_ARROW',
+  UP: 'KEY_UP_ARROW', UPARROW: 'KEY_UP_ARROW',
+  MENU: 'KEY_MENU'
+};
+
+var AZ = {};
+(function(){
+  var s = {a:'q', q:'a', z:'w', w:'z', m:';'};
+  'abcdefghijklmnopqrstuvwxyz'.split('').forEach(function(c){var k = s[c]||c; AZ[c] = [k, 0]; AZ[c.toUpperCase()] = [k, 1];});
+  '0123456789'.split('').forEach(function(d){AZ[d] = [d, 1];});
+  [['&','1',0],['"','3',0],["'",'4',0],['(','5',0],['!','8',0],[')','-',0],['-','=',0],['_','=',1],['$',']',0],['*',']',1],['%',"'",1],[',','m',0],['?','m',1],[';',',',0],['.',',',1],[':','.',0],['/','.',1],['=','/',0],['+','/',1],['|','1',2],['@','2',2],['#','3',2],['^','6',2],['{','9',2],['}','0',2],['[','[',2],[']',']',2],['`','\\',2],['~','/',2],[' ',' ',0]].forEach(function(r){AZ[r[0]] = [r[1], r[2]];});
+})();
+
+function convert(src){
+  var layout = document.getElementById('lay').value;
+  var charDelay = parseInt(document.getElementById('charDelay').value, 10) || 5;
+  var pressDelay = parseInt(document.getElementById('pressDelay').value, 10) || 15;
+  var bootDelay = parseInt(document.getElementById('bootDelay').value, 10) || 3000;
+
+  var body = [], warn = [], defaultDelay = 0;
+  var lines = src.split(/\r?\n/);
+  var lastLines = [];
+
+  lines.forEach(function(raw, i){
+    var line = raw.replace(/^\s+/,'');
+    if (!line.trim()) return;
+    var m = line.match(/^(\S+)(?: (.*))?$/), cmd = m[1].toUpperCase(), arg = m[2] || '', n = i + 1;
+
+    if (cmd === 'REM') {
+      body.push('  // ' + arg);
+      return;
+    }
+
+    if (cmd === 'DEFAULT_DELAY' || cmd === 'DEFAULTDELAY') {
+      defaultDelay = parseInt(arg, 10) || 0;
+      body.push('  // default delay: ' + defaultDelay + ' ms');
+      return;
+    }
+
+    var currentBlock = [];
+
+    if (cmd === 'DELAY') {
+      var d = parseInt(arg, 10) || 0;
+      currentBlock.push('  delay(' + d + ');');
+    } else if (cmd === 'REPEAT') {
+      var count = parseInt(arg, 10) || 1;
+      if (lastLines.length === 0) {
+        warn.push('Line ' + n + ': REPEAT heeft geen eerdere actie');
+      } else {
+        var t = count > 255 ? 'uint16_t' : 'uint8_t';
+        body.push('  for (' + t + ' r = 0; r < ' + count + '; r++) {');
+        lastLines.forEach(function(l){ body.push('    ' + l); });
+        body.push('  }');
+      }
+      return;
+    } else if (cmd === 'STRING' || cmd === 'STRINGLN') {
+      var clean = arg.replace(/[^\x20-\x7e]/g, '');
+      for (var j = 0; j < clean.length; j++) {
+        var ch = clean[j];
+        if (layout === 'az') {
+          var a = AZ[ch];
+          if (!a) { warn.push('Line ' + n + ': AZERTY kan "' + ch + '" niet typen'); continue; }
+          if (a[1] === 1) currentBlock.push('  Keyboard_press(KEY_LEFT_SHIFT);');
+          if (a[1] === 2) currentBlock.push('  Keyboard_press(KEY_RIGHT_ALT);');
+          currentBlock.push('  Keyboard_write(\'' + (a[0] === '\'' ? '\\\'' : a[0]) + '\');');
+          if (a[1] > 0) currentBlock.push('  Keyboard_releaseAll();');
+          currentBlock.push('  delay(' + charDelay + ');');
+        } else {
+          currentBlock.push('  Keyboard_write(\'' + (ch === '\'' || ch === '\\' ? '\\' + ch : ch) + '\');');
+          currentBlock.push('  delay(' + charDelay + ');');
+        }
+      }
+      if (cmd === 'STRINGLN') {
+        currentBlock.push('  Keyboard_press(KEY_RETURN);');
+        currentBlock.push('  delay(' + pressDelay * 2 + ');');
+        currentBlock.push('  Keyboard_releaseAll();');
+        currentBlock.push('  delay(' + pressDelay + ');');
+      }
+    } else {
+      var parts = line.trim().split(/\s+/);
+      var repeatCount = 1;
+      if (parts.length > 1 && !isNaN(parts[parts.length - 1])) {
+        repeatCount = parseInt(parts[parts.length - 1], 10) || 1;
+        parts.pop();
+      }
+
+      var pressLines = [], releaseLines = [];
+      parts.forEach(function(tok){
+        var u = tok.toUpperCase();
+        if (MODS[u]) {
+          pressLines.push('  Keyboard_press(' + MODS[u] + ');');
+        } else if (KEYS[u]) {
+          pressLines.push('  Keyboard_press(' + KEYS[u] + ');');
+        } else if (/^F([1-9]|1[0-2])$/.test(u)) {
+          pressLines.push('  Keyboard_press(KEY_' + u + ');');
+        } else if (tok.length === 1 && /[a-zA-Z0-9]/.test(tok)) {
+          if (layout === 'az' && AZ[tok]) {
+            var a = AZ[tok];
+            if (a[1] === 1) pressLines.push('  Keyboard_press(KEY_LEFT_SHIFT);');
+            if (a[1] === 2) pressLines.push('  Keyboard_press(KEY_RIGHT_ALT);');
+            pressLines.push('  Keyboard_press(\'' + a[0] + '\');');
+          } else {
+            if (tok >= 'A' && tok <= 'Z') pressLines.push('  Keyboard_press(KEY_LEFT_SHIFT);');
+            pressLines.push('  Keyboard_press(\'' + tok.toLowerCase() + '\');');
+          }
+        } else {
+          warn.push('Line ' + n + ': onbekende toets "' + tok + '"');
+        }
+      });
+
+      releaseLines.push('  delay(' + pressDelay * 2 + ');');
+      releaseLines.push('  Keyboard_releaseAll();');
+      releaseLines.push('  delay(' + pressDelay + ');');
+
+      for (var rc = 0; rc < repeatCount; rc++) {
+        pressLines.forEach(function(l){ currentBlock.push(l); });
+        releaseLines.forEach(function(l){ currentBlock.push(l); });
+      }
+    }
+
+    if (currentBlock.length > 0) {
+      currentBlock.forEach(function(l){ body.push(l); });
+      lastLines = currentBlock;
+      if (defaultDelay > 0) {
+        body.push('  delay(' + defaultDelay + ');');
+      }
+    }
+  });
+
+  var ino = [
+'// DuckyScript Sketch for CH552 (ch55xduino)',
+'// Target layout: ' + (layout === 'az' ? 'Belgian AZERTY' : 'US QWERTY'),
+'// Tools -> USB Settings -> USER CODE w/ 148B USB ram',
+'#ifndef USER_USB_RAM',
+'#error "Select Tools -> USB Settings -> USER CODE w/ 148B USB ram"',
+'#endif',
+'#include "src/userUsbHidKeyboard/USBHIDKeyboard.h"',
+'',
+'void payload() {'].concat(body, [
+'}',
+'',
+'void setup() {',
+'  USBInit();',
+'  delay(' + bootDelay + '); // Wacht op USB enumeratie',
+'  payload();',
+'}',
+'',
+'void loop() {}'
+  ]).join('\n');
+
+  return { text: ino, warn: warn };
+}
+
+var inp = document.getElementById('in'), out = document.getElementById('out'), wl = document.getElementById('warn'), msg = document.getElementById('msg'), lay = document.getElementById('lay');
+var charDelayInp = document.getElementById('charDelay'), pressDelayInp = document.getElementById('pressDelay'), bootDelayInp = document.getElementById('bootDelay');
+
+function run(){
+  var r = convert(inp.value);
+  out.value = r.text;
+  wl.innerHTML = '';
+  r.warn.forEach(function(w){var li=document.createElement('li');li.textContent=w;wl.appendChild(li)});
+}
+function flash(t){msg.textContent=t;setTimeout(function(){msg.textContent=''},2000)}
+function selectOut(){out.focus();out.select()}
+document.getElementById('sel').onclick = selectOut;
+document.getElementById('copy').onclick = function(){
+  selectOut();
+  var ok = false;
+  try{ok = document.execCommand('copy')}catch(e){}
+  if(!ok && navigator.clipboard){navigator.clipboard.writeText(out.value).then(function(){flash('Gekopieerd')},function(){flash('Druk Ctrl+C');});return;}
+  flash(ok ? 'Gekopieerd' : 'Druk Ctrl+C');
+};
+
+inp.addEventListener('input', run);
+lay.addEventListener('change', run);
+charDelayInp.addEventListener('input', run);
+pressDelayInp.addEventListener('input', run);
+bootDelayInp.addEventListener('input', run);
+run();
+</script>
+</body>
+</html>
