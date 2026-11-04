@@ -34,6 +34,15 @@ A USB HID injection device based on the CH552P microcontroller. It emulates a ke
 2. Open [Zadig](https://zadig.akeo.ie).
 3. Select the CH552 device.
 4. Choose the **libusb-win32** driver and click *Install*.
+## Windows: driver note
+
+Windows installs the WinUSB driver (via Zadig) for a specific USB port, not for the board itself. This means:
+
+- A driver installed for one port does **not** apply to other ports.
+- Using a USB dock can change the port a device appears on, so the driver may need to be reinstalled.
+- Each board in bootloader mode shows the same ID (`4348:55E0`), so Zadig can't install the driver for all of them at once.
+
+**Recommended workflow:** install WinUSB once on a fixed port, then flash one board at a time through that same port. Hold BOOT while plugging in each board, and unplug it after the flash reports OK.
 
 ## Troubleshooting
 
