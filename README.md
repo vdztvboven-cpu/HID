@@ -1,17 +1,46 @@
-# HID
-this is the repo for my hid injection plug/cable
+# HID Injection Cable (CH552P)
 
-the converter converts ducky script into c++ for the arduino ide
+A USB HID injection device based on the CH552P microcontroller. It emulates a keyboard and types payloads written in DuckyScript-style syntax.
 
+> **For authorized security testing and educational use only.** Only use this on systems you own or have explicit written permission to test.
 
-DRIVERS
+## Contents
 
-for the drivers for this ch552p board 
-use Zadig https://zadig.akeo.ie 
-and select the driver "libusub-win32" 
+- `code/`: Arduino sketch (`.ino`) for the CH552P
+- `converter.html`: converts DuckyScript to C++ for the Arduino IDE
+- `sdcc.sh`: build helper script for SDCC
+- `LICENSE`: MIT
 
-TROUBLESHOOTING GUIDE
+## How it works
 
-if u have an error because of a file named sdcc.sh 
+1. Write your payload in DuckyScript syntax.
+2. Open `converter.html` in a browser and paste the script.
+3. Copy the generated C++ output into the sketch in `code/`.
+4. Flash the sketch to the CH552P board from the Arduino IDE.
+5. Plug the device into the target machine. It appears as a standard USB keyboard and types the payload.
 
-the solution is to replace it with the file in the repo 
+[Add a short description of the sketch here: how the payload is stored, what triggers execution, and whether there is a delay or LED indicator.]
+
+## Requirements
+
+- CH552P board
+- Arduino IDE with the CH552 board package
+- SDCC (for the build helper script)
+- Zadig, for installing the driver on Windows
+
+## Driver setup (Windows)
+
+1. Connect the board while holding the boot button (if your board has one).
+2. Open [Zadig](https://zadig.akeo.ie).
+3. Select the CH552 device.
+4. Choose the **libusb-win32** driver and click *Install*.
+
+## Troubleshooting
+
+**Error related to `sdcc.sh`:** Replace the file in your installation with the version in this repository.
+
+**Device not detected:** Check that the driver is installed with Zadig and that the board is not in a bad USB port.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
